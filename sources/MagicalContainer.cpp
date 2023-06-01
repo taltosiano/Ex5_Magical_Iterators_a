@@ -1,186 +1,218 @@
 #include "MagicalContainer.hpp"
+#include <iostream>
+#include <vector>
+#include <cmath>
+#include <algorithm>
 
 using namespace std;
-using namespace ariel{
+namespace ariel{
 
-MagicalContainer::MagicalContainer() {}
-
-MagicalContainer::~MagicalContainer() {}
+   MagicalContainer::MagicalContainer() {}
     
-    void MagicalContainer::add(int element) {
-      elements.push_back(element);
-      if (isPrime(element))
-         primeIndices.push_back(elements.size() - 1);  // (element)
+    void MagicalContainer::addElement(int element) {
+       elements.push_back(element);
+       sort(elements.begin(), elements.end());         // each push we sort
 }
     
-    void MagicalContainer::remove(int element) {
-        // for (auto it = elements.begin(); it != elements.end(); ++it) {
-        //     if (*it == element) {
-        //         elements.erase(it);
-        //         break;
-        //     }
-        // }
-
-    //     auto it = find(elements.begin(), elements.end(), element);
-    //     if (it != elements.end()) {
-    //         elements.erase(it);
-    //         primeIndices.clear();
-    //         for (int i = 0; i < elements.size(); i++) {
-    //             if (isPrime(elements[i]))
-    //                 primeIndices.push_back(i);
-    //     }
-    //   }
+    void MagicalContainer::removeElement(int element) {
+        for (auto it = elements.begin(); it != elements.end(); ++it) {
+            if (*it == element) {
+                elements.erase(it);
+                return;
+            }
+        }
+        throw runtime_error("Element not found in container");         
     }
     
-    int MagicalContainer::size() const {
+    int MagicalContainer::size(){
         return elements.size();
     }
 
-    bool MagicalContainer::isPrime(int number) const {
-    //     if (number < 2)
-    //         return false;
-    //     for (int i = 2; i <= std::sqrt(number); i++) {
-    //         if (number % i == 0)
-    //             return false;
-    //     }
-    //     return true;
-    // }
-}
+    vector<int> MagicalContainer::getElements() const{
+        return elements;
+    }
 
 //--------------AscendingIterator---------------//
 
-    MagicalContainer::AscendingIterator::AscendingIterator(const MagicalContainer* container, int index = 0) :
-        container(container), index(index) {}
+   
+    MagicalContainer::AscendingIterator::AscendingIterator(MagicalContainer& cont, int index) : container(cont), index(index) {}
+    MagicalContainer::AscendingIterator::AscendingIterator(MagicalContainer& cont) : container(cont), index(0) {}
 
+    // Copy constructor
     MagicalContainer::AscendingIterator::AscendingIterator(const AscendingIterator& other) :
         container(other.container), index(other.index) {}
+    
+    // Destructor
+    MagicalContainer::AscendingIterator::~AscendingIterator() {}
 
-   // AscendingIterator::~AscendingIterator() {}
-
-   MagicalContainer::AscendingIterator::AscendingIterator& operator=(const AscendingIterator& other) {
-   }
-
-   bool MagicalContainer::AscendingIterator::operator==(const AscendingIterator& other) const{
-        return true;
-   }
-
-    bool operator!=(const AscendingIterator& other) const {
-        return true;
+    MagicalContainer::AscendingIterator& MagicalContainer::AscendingIterator::operator=(const AscendingIterator& other) {
+        if(this != &other) {
+            this->container = other.container;
+            this->index = other.index;
+        }
+        return *this;
     }
 
-    bool operator>(const AscendingIterator& other) const {
-        return true;
+    bool MagicalContainer::AscendingIterator::operator==(const AscendingIterator& other) const{
+        return (&this->container == &other.container && this->index == other.index);
     }
 
-    bool operator<(const AscendingIterator& other) const {
-        return true;
+    bool MagicalContainer::AscendingIterator::operator!=(const AscendingIterator& other) const {
+        return !(*this == other);
     }
 
-    int operator*() const {
-        return true;
+    bool MagicalContainer::AscendingIterator::operator>(const AscendingIterator& other) const {
+        return (this->index > other.index);
     }
 
-    AscendingIterator& operator++() {
-        return true;
+    bool MagicalContainer::AscendingIterator::operator<(const AscendingIterator& other) const {
+        return !(this->index > other.index);
     }
 
-    MagicalContainer::AscendingIterator MagicalContainer::beginAscending() const {
-        return AscendingIterator(this);
+    int MagicalContainer::AscendingIterator::operator*() const {
+        return container.elements[(std::vector<int>::size_type)index];
     }
 
-    MagicalContainer::AscendingIterator MagicalContainer::endAscending() const {
-        return AscendingIterator(this, data.size());
+    MagicalContainer::AscendingIterator& MagicalContainer::AscendingIterator::operator++() {
+        index++;
+        return *this;
+    }
+
+    MagicalContainer::AscendingIterator MagicalContainer::AscendingIterator::begin() {
+        return AscendingIterator(container,0);
+    }
+
+    MagicalContainer::AscendingIterator MagicalContainer::AscendingIterator::end() {
+        return AscendingIterator(container,container.size());
     }
 
 
 //--------------SideCrossIterator---------------//
 
 
-    MagicalContainer::SideCrossIterator::SideCrossIterator(const MagicalContainer* container, int index = 0) :
-        container(container), index(index) {}
+   
+    MagicalContainer::SideCrossIterator::SideCrossIterator(MagicalContainer& container, int index, bool isEnd) : 
+    container(container), index(index), isEnd(isEnd){}
+    
+    MagicalContainer::SideCrossIterator::SideCrossIterator(MagicalContainer& container) : 
+    container(container), index(0), isEnd(true){}
 
-    MagicalContainer::AscendingIterator::AscendingIterator(const AscendingIterator& other) :
-        container(other.container), index(other.index) {}
+    MagicalContainer::SideCrossIterator::SideCrossIterator(const SideCrossIterator& other) :
+    container(other.container), index(other.index), isEnd(other.isEnd) {}
 
-   // AscendingIterator::~AscendingIterator() {}
+    MagicalContainer::SideCrossIterator::~SideCrossIterator() {}
 
-   MagicalContainer::SideCrossIterator::SideCrossIterator& operator=(const SideCrossIterator& other) {
+    MagicalContainer::SideCrossIterator& MagicalContainer::SideCrossIterator::operator=(const SideCrossIterator& other) {
+        if(this != &other) {
+            this->container = other.container;
+            this->index = other.index;
+            this->isEnd = other.isEnd;
+        }
+        return *this;
    }
 
-   bool MagicalContainer::SideCrossIterator::operator==(const SideCrossIterator& other) const{
-        return true;
+    bool MagicalContainer::SideCrossIterator::operator==(const SideCrossIterator& other) const {
+        return (&this->container == &other.container) && (isEnd == other.isEnd) && (index == other.index);
    }
 
-    bool operator!=(const SideCrossIterator& other) const {
-        return true;
+    bool MagicalContainer::SideCrossIterator::operator!=(const SideCrossIterator& other) const {
+        return !(*this == other);
     }
 
-    bool operator>(const SideCrossIterator& other) const {
-        return true;
+    bool MagicalContainer::SideCrossIterator::operator>(const SideCrossIterator& other) const {
+         return (this->index > other.index);
     }
 
-    bool operator<(const SideCrossIterator& other) const {
-        return true;
+    bool MagicalContainer::SideCrossIterator::operator<(const SideCrossIterator& other) const {
+        return !(*this > other);
     }
 
-    int operator*() const {
-        return true;
+    int MagicalContainer::SideCrossIterator::operator*() const {
+       if (isEnd) {
+            return container.elements[(std::vector<int>::size_type)index];
+        } else {
+            return container.elements[(std::vector<int>::size_type)(container.size() - index)];
+        }
     }
 
-    SideCrossIterator& operator++() {
-        return true;
+    MagicalContainer::SideCrossIterator& MagicalContainer::SideCrossIterator::operator++() {
+        if (isEnd){
+            if(index != container.size()/2)
+            ++index;
+            else
+                index = container.size();
+        }
+      
+        isEnd = !isEnd;
+
+        return *this;
+}
+    MagicalContainer::SideCrossIterator MagicalContainer::SideCrossIterator::begin() {
+        return SideCrossIterator(container,0,true);
+
     }
 
-    MagicalContainer::SideCrossIterator MagicalContainer::beginSideCross() const {
-        return SideCrossIterator(this);
+    MagicalContainer::SideCrossIterator MagicalContainer::SideCrossIterator::end() {
+        return SideCrossIterator(container, container.size(), false);
     }
 
-    MagicalContainer::SideCrossIterator MagicalContainer::endSideCross() const {
-        return SideCrossIterator(this, data.size() - 1, false);
-    }
+
 
 //--------------PrimeIterator---------------//
 
-    MagicalContainer::SideCrossIterator::SideCrossIterator(const MagicalContainer* container, int index = 0) :
+    MagicalContainer::PrimeIterator::PrimeIterator(MagicalContainer& container, int index) : 
         container(container), index(index) {}
+    MagicalContainer::PrimeIterator::PrimeIterator(MagicalContainer& container) : 
+        container(container), index(0) {}
 
-    MagicalContainer::AscendingIterator::AscendingIterator(const AscendingIterator& other) :
+    MagicalContainer::PrimeIterator::PrimeIterator(const PrimeIterator& other) :
         container(other.container), index(other.index) {}
 
-   // AscendingIterator::~AscendingIterator() {}
+    MagicalContainer::PrimeIterator::~PrimeIterator() {}
 
-   MagicalContainer::PrimeIterator::PrimeIterator& operator=(const PrimeIterator& other) {
-   }
-
-   bool MagicalContainer::PrimeIterator::operator==(const PrimeIterator& other) const{
-        return true;
-   }
-
-    bool operator!=(const PrimeIterator& other) const {
-        return true;
+    MagicalContainer::PrimeIterator& MagicalContainer::PrimeIterator::operator=(const PrimeIterator& other) {
+        if(this != &other) {
+            this->container = other.container;
+            this->index = other.index;
+        }
+        return *this;
     }
 
-    bool operator>(const PrimeIterator& other) const {
-        return true;
+    bool MagicalContainer::PrimeIterator::operator==(const PrimeIterator& other) const{
+        return (this->index == other.index);
     }
 
-    bool operator<(const PrimeIterator& other) const {
-        return true;
+    bool MagicalContainer::PrimeIterator::operator!=(const PrimeIterator& other) const {
+         return !(*this == other);
     }
 
-    int operator*() const {
-        return true;
+    bool MagicalContainer::PrimeIterator::operator>(const PrimeIterator& other) const {
+        return (this->index > other.index);
     }
 
-    PrimeIterator& operator++() {
-        return true;
+    bool MagicalContainer::PrimeIterator::operator<(const PrimeIterator& other) const {
+        return !(this->index > other.index);
     }
 
-    MagicalContainer::PrimeIterator MagicalContainer::beginPrime() const {
-        return PrimeIterator(this);
+    int MagicalContainer::PrimeIterator::operator*() const {
+         return container.elements[static_cast<std::vector<int>::size_type>(index)];
     }
 
-    MagicalContainer::PrimeIterator MagicalContainer::endPrime() const {
-        return PrimeIterator(this, primeIndices.size());
+    MagicalContainer::PrimeIterator& MagicalContainer::PrimeIterator::operator++() {
+        do {
+            index++;
+        } while (index < container.size() && !isPrime(container.elements[static_cast<std::vector<int>::size_type>(index)]));
+        return *this;
+      }
+
+
+
+    MagicalContainer::PrimeIterator MagicalContainer::PrimeIterator::begin() {
+        return PrimeIterator(container, 0);
     }
-}
+
+    MagicalContainer::PrimeIterator MagicalContainer::PrimeIterator::end() {
+        return PrimeIterator(container,container.size());
+
+    }
+    }
